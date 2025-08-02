@@ -1,0 +1,31 @@
+services:
+  mongo:
+    container_name: mongo_db
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongo_data:/data/db
+    networks:
+      - dfl
+    restart: always
+
+  reception-orders:
+    container_name: reception-orders
+    build: ./
+    ports:
+      - ${NEST_PORT_APP}:3000
+    environment:
+      - NEST_PORT_APP=3000
+    command: npm run star:dev
+    networks:
+      - dfl
+    depends_on:
+      - mongo
+
+networks:
+  dfl:
+    driver: bridge
+
+volumes:
+  mongo: { }
