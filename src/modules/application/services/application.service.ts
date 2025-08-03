@@ -46,11 +46,14 @@ export class ApplicationService {
       });
 
       if (associatedApplication) {
-        // Todo comprobar si no existe una orden ya creada
-        const order = await this.orderModel.findOne({
-          codeOrders: new RegExp(`^${pref}${dateParse}`),
-          $expr: { $lt: [{ $size: '$requestAssociated' }, 50] },
-        });
+        // TODO comprobar si no existe una orden ya creada
+        const order = await this.orderModel
+          .findOne({
+            codeOrders: new RegExp(`^${pref}${dateParse}`),
+            $expr: { $lt: [{ $size: '$requestAssociated' }, 50] },
+          })
+          .sort({ createdAt: -1 })
+          .exec();
         // TODO si existe update los documentos asociados a esta orden
         if (order) {
           order.requestAssociated.push(associatedApplication._id);

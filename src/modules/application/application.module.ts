@@ -9,6 +9,7 @@ import {
 import Redis from 'ioredis';
 import { RedisIndexService } from './services/redis-index.service';
 import { OrdersModule } from '../ordenes/orders.module';
+import { GenerateTokenController } from './controller/generate-token.controller';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { OrdersModule } from '../ordenes/orders.module';
     ]),
     OrdersModule,
   ],
-  controllers: [ApplicationController],
+  controllers: [ApplicationController, GenerateTokenController],
   providers: [
     {
       provide: 'REDIS_CLIENT',
