@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ApplicationModule } from './modules/application/application.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { OrdersModule } from './modules/ordenes/orders.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     ),
     ScheduleModule.forRoot(),
     ApplicationModule,
+    OrdersModule,
   ],
   controllers: [],
   providers: [],
