@@ -6,14 +6,30 @@ import {
   ApplicationSchema,
   ApplicationSchemaModel,
 } from './entities/application.entity';
+import Redis from 'ioredis';
+import { RedisIndexService } from './services/redis-index.service';
+import { OrdersModule } from '../ordenes/orders.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: ApplicationSchema.name, schema: ApplicationSchemaModel },
     ]),
+    OrdersModule,
   ],
   controllers: [ApplicationController],
-  providers: [ApplicationService],
+  providers: [
+    {
+      provide: 'REDIS_CLIENT',
+      useFactory: () => {
+        return new Redis({
+          host: process.env.NEST_HOST_REDIS ?? 'localhost',
+          port: 6379,
+        });
+      },
+    },
+    ApplicationService,
+    RedisIndexService,
+  ],
 })
 export class ApplicationModule {}

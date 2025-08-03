@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ApplicationModule } from './modules/application/application.module';
 import { MongooseModule } from '@nestjs/mongoose';
-import { OrdersModule } from './modules/ordenes/orders.module';
 
 @Module({
   imports: [
@@ -11,11 +10,11 @@ import { OrdersModule } from './modules/ordenes/orders.module';
       isGlobal: true,
     }),
     MongooseModule.forRoot(
-      process.env.NEST_MONGO_URL ?? 'mongodb://mongo:27017/challenge-backend',
+      process.env.NEST_MONGO_URL ??
+        'mongodb://localhost:27017/challenge-backend',
     ),
     ScheduleModule.forRoot(),
     ApplicationModule,
-    OrdersModule,
   ],
   controllers: [],
   providers: [],

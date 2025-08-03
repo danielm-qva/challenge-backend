@@ -5,12 +5,12 @@ export type ApplicationDocument = HydratedDocument<ApplicationSchema>;
 
 @Schema({ timestamps: true })
 export class ApplicationSchema {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   code: string;
 
   @Prop({
     required: true,
-    enum: ['Passaport', 'DNI', 'Accreditation'],
+    enum: ['Passport', 'DNI', 'Accreditation'],
   })
   type: string;
 

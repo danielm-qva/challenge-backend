@@ -15,5 +15,6 @@ import { OrderEntitySchema, OrdersSchema } from './entities/orders.entity';
   ],
   controllers: [OrdersController],
   providers: [OrdersService],
+  exports: [MongooseModule],
 })
 export class OrdersModule {}

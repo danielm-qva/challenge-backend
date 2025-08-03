@@ -10,6 +10,8 @@ export class AccreditationPeriodDto {
   @IsNotEmpty()
   @IsDate()
   @Type(() => Date)
-  @ValidateIf((opt: any) => opt.endDate > opt.startDate)
+  @ValidateIf(
+    (opt: { startDate: Date; endDate: Date }) => opt.endDate > opt.startDate,
+  )
   endDate: Date;
 }
