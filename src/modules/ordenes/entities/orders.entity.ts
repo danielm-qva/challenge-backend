@@ -6,6 +6,13 @@ export type OrderSchemaDocument = HydratedDocument<OrderEntitySchema>;
 
 @Schema({ timestamps: true })
 export class OrderEntitySchema {
+
+  @Prop({ required: true })
+  count: number;
+
+  @Prop({ required: true })
+  prefixOrders: string;
+
   @Prop({ required: true, unique: true })
   codeOrders: string;
 

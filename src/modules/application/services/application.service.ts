@@ -29,22 +29,11 @@ export class ApplicationService {
   ) {}
 
   async create(createDto: CreateApplicationDto) {
-    // const session = await this.applicationModel.startSession();
-    // session.startTransaction();
-
     try {
       const pref = getPrefTypeDocument(createDto.type);
       const dateParse = parseDate();
 
       // TODO Verificamos si existe una orden, si existe la actualizamos, si no la creamos.
-      const order = await this.orderModel
-        .findOne({
-          codeOrders: new RegExp(`^${pref}${dateParse}`),
-          $expr: { $lt: [{ $size: '$requestAssociated' }, 50] },
-        })
-        .sort({ createdAt: -1 })
-        .exec();
-
       const redisKey = `application:index:${pref}${dateParse}`;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const index = await this.redisIndexService.getNextIndex(redisKey);
@@ -54,54 +43,132 @@ export class ApplicationService {
         code,
       });
 
+      let order = await this.orderModel
+        .updateOne(
+          {
+            prefixOrders: `${pref}${dateParse}`,
+            count: { $lt: 50 },
+          },
+          {
+            $push: { requestAssociated: associatedApplication._id },
+            $inc: { count: 1 },
+          },
+          { upsert: true },
+        )
+        .exec();
+
       if (order) {
-        try {
-          await this.orderModel.updateOne(
-            { _id: order._id },
-            { $push: { requestAssociated: associatedApplication._id } },
+        if (order?.upsertedCount === 1) {
+          const indexOrder = await this.redisIndexService.getNextIndex(
+            `order:index:${pref}`,
+            'order',
           );
-        } catch (error) {
-          throw new HttpException(
-            'We were unable to associate the document with your order.',
-            HttpStatus.BAD_REQUEST,
-          );
-        }
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const indexOrder = await this.redisIndexService.getNextIndex(
-          `order:index:${pref}`,
-          'order',
-        );
-        const codeOrders = `${pref}${dateParse}${String(indexOrder).padStart(3, '0')}`;
+          const codeOrders = `${pref}${dateParse}${String(indexOrder).padStart(3, '0')}`;
 
-        if (
-          (indexOrder as number) === +(process.env.NEST_LIMIT_ORDER_DAY || 1000)
-        ) {
-          throw new HttpException(
-            'It is not possible to create more orders.',
-            HttpStatus.BAD_REQUEST,
-          );
-        }
+          if (
+            (indexOrder as number) ===
+            +(process.env.NEST_LIMIT_ORDER_DAY || 1000)
+          ) {
+            throw new HttpException(
+              'It is not possible to create more orders.',
+              HttpStatus.BAD_REQUEST,
+            );
+          }
 
-        try {
-          await this.orderModel.create({
-            codeOrders,
-            requestAssociated: [associatedApplication._id],
-          });
-        } catch (error) {
-          // TODO puede fallar la ordern, se va a crear una solicitud sin estar asociada a ninguna orden.
-          throw new HttpException(
-            'We were unable to create the order',
-            HttpStatus.BAD_REQUEST,
-          );
+          await this.orderModel
+            .updateOne(
+              {
+                _id: order.upsertedId,
+              },
+              {
+                $set: { codeOrders },
+              },
+            )
+            .exec();
         }
       }
+
       return associatedApplication;
     } catch (error) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
+
+  // async create(createDto: CreateApplicationDto) {
+  //   // const session = await this.applicationModel.startSession();
+  //   // session.startTransaction();
+  //
+  //   try {
+  //     const pref = getPrefTypeDocument(createDto.type);
+  //     const dateParse = parseDate();
+  //
+  //     // TODO Verificamos si existe una orden, si existe la actualizamos, si no la creamos.
+  //     const order = await this.orderModel
+  //       .findOne({
+  //         codeOrders: new RegExp(`^${pref}${dateParse}`),
+  //         $expr: { $lt: [{ $size: '$requestAssociated' }, 50] },
+  //       })
+  //       .sort({ createdAt: -1 })
+  //       .exec();
+  //
+  //     const redisKey = `application:index:${pref}${dateParse}`;
+  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  //     const index = await this.redisIndexService.getNextIndex(redisKey);
+  //     const code = `S${String(index).padStart(2, '0')}`;
+  //     const associatedApplication = await this.applicationModel.create({
+  //       ...createDto,
+  //       code,
+  //     });
+  //
+  //     if (order) {
+  //       try {
+  //         await this.orderModel.updateOne(
+  //           { _id: order._id },
+  //           { $push: { requestAssociated: associatedApplication._id } },
+  //         );
+  //       } catch (error) {
+  //         throw new HttpException(
+  //           'We were unable to associate the document with your order.',
+  //           HttpStatus.BAD_REQUEST,
+  //         );
+  //       }
+  //     } else {
+  //       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  //       const indexOrder = await this.redisIndexService.getNextIndex(
+  //         `order:index:${pref}`,
+  //         'order',
+  //       );
+  //       const codeOrders = `${pref}${dateParse}${String(indexOrder).padStart(3, '0')}`;
+  //
+  //       if (
+  //         (indexOrder as number) === +(process.env.NEST_LIMIT_ORDER_DAY || 1000)
+  //       ) {
+  //         throw new HttpException(
+  //           'It is not possible to create more orders.',
+  //           HttpStatus.BAD_REQUEST,
+  //         );
+  //       }
+  //
+  //       try {
+  //         await this.orderModel.create({
+  //           codeOrders,
+  //           requestAssociated: [associatedApplication._id],
+  //         });
+  //       } catch (error) {
+  //         // TODO puede fallar la ordern, se va a crear una solicitud sin estar asociada a ninguna orden.
+  //         throw new HttpException(
+  //           'We were unable to create the order',
+  //           HttpStatus.BAD_REQUEST,
+  //         );
+  //       }
+  //     }
+  //     return associatedApplication;
+  //   } catch (error) {
+  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  //     throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+  //   }
+  // }
 
   findAll({ page, size }: QueryRequestDto) {
     return this.applicationModel
