@@ -12,7 +12,6 @@ export class OrderEntitySchema {
   @Prop({
     type: [mongoose.Schema.Types.ObjectId],
     ref: ApplicationSchema.name,
-    required: true,
   })
   requestAssociated: mongoose.Types.ObjectId[];
 }

@@ -2,13 +2,12 @@ FROM node:20-alpine3.19
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
-COPY yarn.lock ./
+COPY package.json yarn.lock ./
 
 RUN yarn install
 
 COPY . .
 
-Run npm run start:dev
-
 EXPOSE 3000
+
+CMD ["npm", "run", "start:dev"]

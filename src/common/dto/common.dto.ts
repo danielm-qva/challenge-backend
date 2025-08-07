@@ -4,7 +4,7 @@ export class CommonDto {
   @IsNotEmpty()
   @IsString()
   number: string;
-  // common
+
   @IsNotEmpty()
   @IsString()
   namePerson: string;

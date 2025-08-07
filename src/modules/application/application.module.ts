@@ -10,11 +10,15 @@ import Redis from 'ioredis';
 import { RedisIndexService } from './services/redis-index.service';
 import { OrdersModule } from '../ordenes/orders.module';
 import { GenerateTokenController } from './controller/generate-token.controller';
+import { Trace, TranceSchemaModel } from './entities/trace.entity';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: ApplicationSchema.name, schema: ApplicationSchemaModel },
+    ]),
+    MongooseModule.forFeature([
+      { name: Trace.name, schema: TranceSchemaModel },
     ]),
     OrdersModule,
   ],
@@ -32,5 +36,6 @@ import { GenerateTokenController } from './controller/generate-token.controller'
     ApplicationService,
     RedisIndexService,
   ],
+  exports: [MongooseModule],
 })
 export class ApplicationModule {}

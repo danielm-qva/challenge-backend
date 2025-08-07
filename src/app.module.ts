@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ScheduleModule } from '@nestjs/schedule';
 import { ApplicationModule } from './modules/application/application.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
@@ -19,7 +18,6 @@ import { JwtModule } from '@nestjs/jwt';
       process.env.NEST_MONGO_URL ??
         'mongodb://localhost:27017/challenge-backend',
     ),
-    ScheduleModule.forRoot(),
     ApplicationModule,
   ],
   controllers: [],

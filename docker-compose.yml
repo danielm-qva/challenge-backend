@@ -1,6 +1,6 @@
 services:
   redis:
-    container_name: redis_dfl
+    container_name: redis_db
     image: redis
     ports:
       - "6379:6379"
@@ -26,15 +26,23 @@ services:
 #  reception-orders:
 #    container_name: reception-orders
 #    build: ./
+#    volumes:
+#      - ./src:/usr/app/src
 #    ports:
 #      - ${NEST_PORT_APP}:3000
 #    environment:
 #      - NEST_PORT_APP=3000
-#    command: npm run star:dev
+#      - NEST_MONGO_URL=mongodb://mongo:27017/challenge-backend
+#      - NEXT_APP_JWT_SECRET=sasd111qsSaskkjshehyyluuwolsjush**77197hbbaggt
+#      - NEST_PORT_REDIS=6379
+#      - NEST_HOST_REDIS=redis
+#      - NEST_DOMINE_REGISTER=https://ll.com,https://ll1.com,https://ll2.com
+#    command: npm run start:dev
 #    networks:
 #      - dfl
 #    depends_on:
 #      - mongo
+#      - redis
 
 networks:
   dfl:

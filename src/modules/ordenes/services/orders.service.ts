@@ -24,6 +24,18 @@ export class OrdersService {
     }
   }
 
+  async getOrders(prefix: string) {
+    try {
+      const order = await this.orderSchema.findOne({
+        codeOrders: new RegExp(`^${prefix}`),
+        $expr: { $lt: [{ $size: '$requestAssociated' }, 50] },
+      });
+
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
   async findAll({ page, size }: QueryRequestDto) {
     return await this.orderSchema
       .find()

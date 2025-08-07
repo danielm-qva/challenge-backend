@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApplicationService } from '../services/application.service';
 import { CreateApplicationDto } from '../dto/create-application.dto';
@@ -15,9 +16,11 @@ import { UpdateApplicationDto } from '../dto/update-application.dto';
 import { QueryRequestDto } from '../../../common/dto/QueryRequest.dto';
 import { ValidationObjectId } from '../../../pipe/ValidationObjetId';
 import { AppAuthGuards } from '../../../guards/app-auth.guards';
+import { TraceInterceptor } from '../interceptor/trace.interceptor';
 
 @Controller('application')
 @UseGuards(AppAuthGuards)
+@UseInterceptors(TraceInterceptor)
 export class ApplicationController {
   constructor(private readonly applicationService: ApplicationService) {}
 

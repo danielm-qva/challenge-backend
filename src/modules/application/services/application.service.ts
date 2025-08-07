@@ -33,53 +33,70 @@ export class ApplicationService {
     // session.startTransaction();
 
     try {
-      // TODO creamos la solicitud.
       const pref = getPrefTypeDocument(createDto.type);
       const dateParse = parseDate();
+
+      // TODO Verificamos si existe una orden, si existe la actualizamos, si no la creamos.
+      const order = await this.orderModel
+        .findOne({
+          codeOrders: new RegExp(`^${pref}${dateParse}`),
+          $expr: { $lt: [{ $size: '$requestAssociated' }, 50] },
+        })
+        .sort({ createdAt: -1 })
+        .exec();
+
       const redisKey = `application:index:${pref}${dateParse}`;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const index = await this.redisIndexService.getNextIndex(redisKey);
-      const codeRequest = `S${String(index).padStart(2, '0')}`;
+      const code = `S${String(index).padStart(2, '0')}`;
       const associatedApplication = await this.applicationModel.create({
         ...createDto,
-        code: codeRequest,
+        code,
       });
 
-      if (associatedApplication) {
-        // TODO comprobar si no existe una orden ya creada
-        const order = await this.orderModel
-          .findOne({
-            codeOrders: new RegExp(`^${pref}${dateParse}`),
-            $expr: { $lt: [{ $size: '$requestAssociated' }, 50] },
-          })
-          .sort({ createdAt: -1 })
-          .exec();
-        // TODO si existe update los documentos asociados a esta orden
-        if (order) {
-          order.requestAssociated.push(associatedApplication._id);
-          await order.save();
-        } else {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          const index = await this.redisIndexService.getNextIndex(
-            `order:index:${pref}`,
-            'order',
+      if (order) {
+        try {
+          await this.orderModel.updateOne(
+            { _id: order._id },
+            { $push: { requestAssociated: associatedApplication._id } },
           );
-          const codeOrders = `${pref}${dateParse}${String(index).padStart(3, '0')}`;
-          try {
-            await this.orderModel.create({
-              codeOrders,
-              requestAssociated: [associatedApplication._id],
-            });
-          } catch (error) {
-            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-          }
+        } catch (error) {
+          throw new HttpException(
+            'We were unable to associate the document with your order.',
+            HttpStatus.BAD_REQUEST,
+          );
         }
-        return associatedApplication;
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const indexOrder = await this.redisIndexService.getNextIndex(
+          `order:index:${pref}`,
+          'order',
+        );
+        const codeOrders = `${pref}${dateParse}${String(indexOrder).padStart(3, '0')}`;
+
+        if (
+          (indexOrder as number) === +(process.env.NEST_LIMIT_ORDER_DAY || 1000)
+        ) {
+          throw new HttpException(
+            'It is not possible to create more orders.',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+
+        try {
+          await this.orderModel.create({
+            codeOrders,
+            requestAssociated: [associatedApplication._id],
+          });
+        } catch (error) {
+          // TODO puede fallar la ordern, se va a crear una solicitud sin estar asociada a ninguna orden.
+          throw new HttpException(
+            'We were unable to create the order',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
       }
-      return new HttpException(
-        'We were unable to create the request.',
-        HttpStatus.BAD_REQUEST,
-      );
+      return associatedApplication;
     } catch (error) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
@@ -98,7 +115,7 @@ export class ApplicationService {
   async findOne(id: string) {
     const application = await this.applicationModel.findById(id).exec();
     if (!application) {
-      throw new HttpException('Solicitud no encontrada', HttpStatus.NOT_FOUND);
+      throw new HttpException('Request not found', HttpStatus.NOT_FOUND);
     }
     return application;
   }
