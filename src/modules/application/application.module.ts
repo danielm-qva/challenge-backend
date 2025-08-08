@@ -8,9 +8,9 @@ import {
 } from './entities/application.entity';
 import Redis from 'ioredis';
 import { RedisIndexService } from './services/redis-index.service';
-import { OrdersModule } from '../ordenes/orders.module';
 import { GenerateTokenController } from './controller/generate-token.controller';
 import { Trace, TranceSchemaModel } from './entities/trace.entity';
+import { OrdersModule } from '../orders/orders.module';
 
 @Module({
   imports: [
